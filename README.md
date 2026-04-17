@@ -55,6 +55,18 @@ button {
   border-radius: 12px;
   margin: 10px;
 }
+
+.historico {
+  font-size: 13px;
+  margin-top: 10px;
+  background: #f9f9f9;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.data-box {
+  margin: 15px;
+}
 </style>
 </head>
 
@@ -62,7 +74,7 @@ button {
 
 <div class="header">
   <img src="logo.png">
-  <h1>Embaixada Eraldo Gomes</h1>
+  <h1>Embaixadores do Rei</h1>
 </div>
 
 <form id="form">
@@ -73,7 +85,9 @@ button {
   <button class="salvar" type="submit">Salvar</button>
 </form>
 
-<input type="date" id="dataReuniao">
+<div class="data-box">
+  <input type="date" id="dataReuniao">
+</div>
 
 <div id="lista"></div>
 
@@ -104,15 +118,50 @@ db.ref("embaixadores").on("value", snapshot => {
   render();
 });
 
+function calcularFrequencia(pessoa) {
+  if (!pessoa.presencas) return "0%";
+
+  let total = pessoa.presencas.length;
+  let presencas = pessoa.presencas.filter(p => p.presente).length;
+
+  if (total === 0) return "0%";
+
+  return Math.round((presencas / total) * 100) + "%";
+}
+
 function render() {
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
 
+  dados.sort((a, b) => a.nome.localeCompare(b.nome));
+
   dados.forEach(p => {
+    let total = p.presencas ? p.presencas.length : 0;
+    let freq = calcularFrequencia(p);
+
+    let historico = "";
+    if (p.presencas) {
+      p.presencas.forEach(h => {
+        historico += `${h.data} - ${h.presente ? "✔" : "❌"}<br>`;
+      });
+    }
+
     lista.innerHTML += `
       <div class="card">
         <strong>${p.nome}</strong><br>
-        Tarefa: ${p.tarefa}<br><br>
+        📅 ${p.nascimento}<br>
+        📌 Tarefa: ${p.tarefa}<br>
+        📞 ${p.telefone}<br><br>
+
+        ⭐ Frequência: ${p.presencas ? p.presencas.filter(x => x.presente).length : 0} / ${total} (${freq})<br><br>
+
+        <button class="presente" onclick="marcarPresenca('${p.id}', true)">✔ Presente</button>
+        <button class="falta" onclick="marcarPresenca('${p.id}', false)">❌ Falta</button><br><br>
+
+        <div class="historico">
+          <strong>Histórico:</strong><br>
+          ${historico || "Sem registros"}
+        </div><br>
 
         <button class="editar" onclick="editar('${p.id}')">✏️ Editar</button>
         <button class="excluir" onclick="remover('${p.id}')">Excluir</button>
@@ -121,7 +170,28 @@ function render() {
   });
 }
 
-// ✏️ EDITAR
+// ✔ Presença
+function marcarPresenca(id, valor) {
+  let dataEscolhida = document.getElementById("dataReuniao").value;
+
+  if (!dataEscolhida) {
+    alert("Escolha a data!");
+    return;
+  }
+
+  db.ref("embaixadores/" + id + "/presencas").once("value", snap => {
+    let lista = snap.val() || [];
+
+    lista.push({
+      data: dataEscolhida,
+      presente: valor
+    });
+
+    db.ref("embaixadores/" + id + "/presencas").set(lista);
+  });
+}
+
+// ✏️ Editar
 function editar(id) {
   let p = dados.find(x => x.id === id);
 
@@ -133,7 +203,7 @@ function editar(id) {
   editandoId = id;
 }
 
-// 💾 SALVAR (AGORA ATUALIZA OU CRIA)
+// 💾 Salvar (corrigido)
 document.getElementById("form").addEventListener("submit", function(e) {
   e.preventDefault();
 
@@ -141,23 +211,25 @@ document.getElementById("form").addEventListener("submit", function(e) {
     nome: document.getElementById("nome").value,
     nascimento: document.getElementById("nascimento").value,
     tarefa: document.getElementById("tarefa").value,
-    telefone: document.getElementById("telefone").value,
-    presencas: []
+    telefone: document.getElementById("telefone").value
   };
 
   if (editandoId) {
     db.ref("embaixadores/" + editandoId).update(pessoa);
     editandoId = null;
   } else {
+    pessoa.presencas = [];
     db.ref("embaixadores").push(pessoa);
   }
 
   this.reset();
 });
 
-// ❌ REMOVER
+// ❌ Remover
 function remover(id) {
-  db.ref("embaixadores/" + id).remove();
+  if (confirm("Excluir?")) {
+    db.ref("embaixadores/" + id).remove();
+  }
 }
 
 </script>
