@@ -66,18 +66,18 @@ function render() {
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
 
-  dados.forEach((pessoa, index) => {
-    lista.innerHTML += `
-      <div class="card">
-        <strong>${pessoa.nome}</strong><br>
-        Nascimento: ${pessoa.nascimento}<br>
-        Presença: ${pessoa.presenca}<br>
-        Tarefa: ${pessoa.tarefa}<br>
-        Telefone: ${pessoa.telefone}<br>
-        <button onclick="remover(${index})">Excluir</button>
-      </div>
-    `;
-  });
+  for (let i = 0; i < dados.length; i++) {
+    let pessoa = dados[i];
+
+    lista.innerHTML += "<div class='card'>" +
+      "<strong>" + pessoa.nome + "</strong><br>" +
+      "Nascimento: " + pessoa.nascimento + "<br>" +
+      "Presença: " + pessoa.presenca + "<br>" +
+      "Tarefa: " + pessoa.tarefa + "<br>" +
+      "Telefone: " + pessoa.telefone + "<br>" +
+      "<button onclick='remover(" + i + ")'>Excluir</button>" +
+      "</div>";
+  }
 }
 
 function remover(index) {
