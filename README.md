@@ -54,6 +54,11 @@ button {
   margin-bottom: 10px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
+
+.historico {
+  font-size: 13px;
+  margin-top: 10px;
+}
 </style>
 
 </head>
@@ -79,9 +84,14 @@ function salvarLocal() {
   localStorage.setItem("embaixadores", JSON.stringify(dados));
 }
 
+function dataHoje() {
+  const hoje = new Date();
+  return hoje.toISOString().split("T")[0];
+}
+
 function calcularFrequencia(pessoa) {
   let total = pessoa.presencas.length;
-  let presencas = pessoa.presencas.filter(p => p === true).length;
+  let presencas = pessoa.presencas.filter(p => p.presente).length;
 
   if (total === 0) return "0%";
 
@@ -101,6 +111,11 @@ function render() {
     let total = p.presencas.length;
     let freq = calcularFrequencia(p);
 
+    let historico = "";
+    p.presencas.forEach(h => {
+      historico += `${h.data} - ${h.presente ? "✔" : "❌"}<br>`;
+    });
+
     lista.innerHTML += `
       <div class="card">
         <strong>${p.nome}</strong><br>
@@ -108,10 +123,15 @@ function render() {
         Tarefa: ${p.tarefa}<br>
         Telefone: ${p.telefone}<br><br>
 
-        Presenças: ${p.presencas.filter(x => x).length} / ${total} (${freq})<br><br>
+        Frequência: ${p.presencas.filter(x => x.presente).length} / ${total} (${freq})<br><br>
 
-        <button class="presente" onclick="marcarPresenca(${i}, true)">✔ Presente</button>
-        <button class="falta" onclick="marcarPresenca(${i}, false)">❌ Falta</button><br><br>
+        <button class="presente" onclick="marcarPresenca(${i}, true)">✔ Hoje</button>
+        <button class="falta" onclick="marcarPresenca(${i}, false)">❌ Hoje</button><br><br>
+
+        <div class="historico">
+          <strong>Histórico:</strong><br>
+          ${historico || "Sem registros"}
+        </div><br>
 
         <button onclick="editar(${i})">Editar</button>
         <button onclick="remover(${i})">Excluir</button>
@@ -121,7 +141,13 @@ function render() {
 }
 
 function marcarPresenca(index, valor) {
-  dados[index].presencas.push(valor);
+  let hoje = dataHoje();
+
+  dados[index].presencas.push({
+    data: hoje,
+    presente: valor
+  });
+
   salvarLocal();
   render();
 }
