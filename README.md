@@ -8,13 +8,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
 <style>
-body {
-  font-family: Arial;
-  background: #f0f4ff;
-  margin: 0;
-}
+body { font-family: Arial; background: #f0f4ff; margin: 0; }
 
-/* TOPO */
 .header {
   text-align: center;
   background: #0d47a1;
@@ -23,18 +18,13 @@ body {
   border-radius: 0 0 20px 20px;
 }
 
-.header img {
-  width: 120px;
-  margin-bottom: 10px;
-}
+.header img { width: 120px; }
 
-/* FORM */
 form {
   background: white;
   padding: 15px;
   border-radius: 12px;
   margin: 15px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
 input {
@@ -42,53 +32,30 @@ input {
   margin: 8px 0;
   padding: 10px;
   width: 100%;
-  border-radius: 6px;
-  border: 1px solid #ccc;
 }
 
-/* BOTÕES */
 button {
-  padding: 8px 10px;
+  padding: 8px;
   margin: 3px;
   border: none;
-  cursor: pointer;
   border-radius: 6px;
+  cursor: pointer;
   font-weight: bold;
 }
 
 .salvar { background: #fdd835; }
-.presente { background: #2e7d32; color: white; }
-.falta { background: #c62828; color: white; }
+.presente { background: green; color: white; }
+.falta { background: red; color: white; }
 .excluir { background: #1565c0; color: white; }
+.editar { background: orange; }
 
-/* DATA */
-.data-box {
-  background: white;
-  padding: 10px;
-  border-radius: 10px;
-  margin: 15px;
-  text-align: center;
-}
-
-/* CARDS */
 .card {
   background: white;
   padding: 15px;
-  border-radius: 15px;
-  margin: 10px 15px;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-  border-left: 6px solid #fdd835;
-}
-
-.historico {
-  font-size: 13px;
-  margin-top: 10px;
-  background: #f9f9f9;
-  padding: 8px;
-  border-radius: 8px;
+  border-radius: 12px;
+  margin: 10px;
 }
 </style>
-
 </head>
 
 <body>
@@ -106,10 +73,7 @@ button {
   <button class="salvar" type="submit">Salvar</button>
 </form>
 
-<div class="data-box">
-  <strong>Data da reunião:</strong>
-  <input type="date" id="dataReuniao">
-</div>
+<input type="date" id="dataReuniao">
 
 <div id="lista"></div>
 
@@ -119,17 +83,16 @@ const firebaseConfig = {
   apiKey: "AIzaSyAe_fXCz68AZasK5zqg9NDXokw2zmNgFqw",
   authDomain: "embaixadores-c85f8.firebaseapp.com",
   databaseURL: "https://embaixadores-c85f8-default-rtdb.firebaseio.com",
-  projectId: "embaixadores-c85f8",
-  storageBucket: "embaixadores-c85f8.firebasestorage.app",
-  messagingSenderId: "404118934484",
-  appId: "1:404118934484:web:7ea1dac462b3ed82213c41"
+  projectId: "embaixadores-c85f8"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 let dados = [];
+let editandoId = null;
 
+// 🔄 Atualização em tempo real
 db.ref("embaixadores").on("value", snapshot => {
   dados = [];
   snapshot.forEach(child => {
@@ -141,79 +104,36 @@ db.ref("embaixadores").on("value", snapshot => {
   render();
 });
 
-function calcularFrequencia(pessoa) {
-  let total = pessoa.presencas.length;
-  let presencas = pessoa.presencas.filter(p => p.presente).length;
-  if (total === 0) return "0%";
-  return Math.round((presencas / total) * 100) + "%";
-}
-
 function render() {
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
 
-  dados.sort((a, b) => a.nome.localeCompare(b.nome));
-
   dados.forEach(p => {
-    let total = p.presencas ? p.presencas.length : 0;
-    let freq = p.presencas ? calcularFrequencia(p) : "0%";
-
-    let historico = "";
-    if (p.presencas) {
-      p.presencas.forEach(h => {
-        historico += `${h.data} - ${h.presente ? "✔" : "❌"}<br>`;
-      });
-    }
-
     lista.innerHTML += `
       <div class="card">
         <strong>${p.nome}</strong><br>
-        📅 ${p.nascimento}<br>
-        📌 Tarefa: ${p.tarefa}<br>
-        📞 ${p.telefone}<br><br>
+        Tarefa: ${p.tarefa}<br><br>
 
-        ⭐ Frequência: ${p.presencas ? p.presencas.filter(x => x.presente).length : 0} / ${total} (${freq})<br><br>
-
-        <button class="presente" onclick="marcarPresenca('${p.id}', true)">✔ Presente</button>
-        <button class="falta" onclick="marcarPresenca('${p.id}', false)">❌ Falta</button><br><br>
-
-        <div class="historico">
-          <strong>Histórico:</strong><br>
-          ${historico || "Sem registros"}
-        </div><br>
-
+        <button class="editar" onclick="editar('${p.id}')">✏️ Editar</button>
         <button class="excluir" onclick="remover('${p.id}')">Excluir</button>
       </div>
     `;
   });
 }
 
-function marcarPresenca(id, valor) {
-  let dataEscolhida = document.getElementById("dataReuniao").value;
+// ✏️ EDITAR
+function editar(id) {
+  let p = dados.find(x => x.id === id);
 
-  if (!dataEscolhida) {
-    alert("Escolha a data!");
-    return;
-  }
+  document.getElementById("nome").value = p.nome;
+  document.getElementById("nascimento").value = p.nascimento;
+  document.getElementById("tarefa").value = p.tarefa;
+  document.getElementById("telefone").value = p.telefone;
 
-  db.ref("embaixadores/" + id + "/presencas").once("value", snap => {
-    let lista = snap.val() || [];
-
-    lista.push({
-      data: dataEscolhida,
-      presente: valor
-    });
-
-    db.ref("embaixadores/" + id + "/presencas").set(lista);
-  });
+  editandoId = id;
 }
 
-function remover(id) {
-  if (confirm("Excluir?")) {
-    db.ref("embaixadores/" + id).remove();
-  }
-}
-
+// 💾 SALVAR (AGORA ATUALIZA OU CRIA)
 document.getElementById("form").addEventListener("submit", function(e) {
   e.preventDefault();
 
@@ -225,9 +145,20 @@ document.getElementById("form").addEventListener("submit", function(e) {
     presencas: []
   };
 
-  db.ref("embaixadores").push(pessoa);
+  if (editandoId) {
+    db.ref("embaixadores/" + editandoId).update(pessoa);
+    editandoId = null;
+  } else {
+    db.ref("embaixadores").push(pessoa);
+  }
+
   this.reset();
 });
+
+// ❌ REMOVER
+function remover(id) {
+  db.ref("embaixadores/" + id).remove();
+}
 
 </script>
 
