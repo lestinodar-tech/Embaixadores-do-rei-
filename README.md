@@ -80,7 +80,7 @@ button {
 <form id="form">
   <input type="text" id="nome" placeholder="Nome" required>
   <input type="date" id="nascimento" required>
-  <input type="number" id="tarefa" placeholder="Número da tarefa">
+  <input type="text" id="tarefa" placeholder="Manual e Tarefa">
   <input type="text" id="telefone" placeholder="Telefone">
   <button class="salvar" type="submit">Salvar</button>
 </form>
