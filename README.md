@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Embaixadores do Rei</title>
 
-<!-- Firebase compatível -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
@@ -79,11 +79,14 @@ button {
   <button type="submit">Salvar</button>
 </form>
 
+<!-- NOVO: escolher data -->
+<input type="date" id="dataReuniao">
+
 <div id="lista"></div>
 
 <script>
 
-// 🔥 SEU FIREBASE (já colocado)
+// 🔥 SEU FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyAe_fXCz68AZasK5zqg9NDXokw2zmNgFqw",
   authDomain: "embaixadores-c85f8.firebaseapp.com",
@@ -100,7 +103,7 @@ const db = firebase.database();
 
 let dados = [];
 
-// 🔄 ESCUTA EM TEMPO REAL
+// 🔄 Atualização em tempo real
 db.ref("embaixadores").on("value", snapshot => {
   dados = [];
 
@@ -113,11 +116,6 @@ db.ref("embaixadores").on("value", snapshot => {
 
   render();
 });
-
-function dataHoje() {
-  const hoje = new Date();
-  return hoje.toISOString().split("T")[0];
-}
 
 function calcularFrequencia(pessoa) {
   let total = pessoa.presencas.length;
@@ -134,7 +132,7 @@ function render() {
 
   dados.sort((a, b) => a.nome.localeCompare(b.nome));
 
-  dados.forEach((p, i) => {
+  dados.forEach(p => {
     let total = p.presencas ? p.presencas.length : 0;
     let freq = p.presencas ? calcularFrequencia(p) : "0%";
 
@@ -154,8 +152,8 @@ function render() {
 
         Frequência: ${p.presencas ? p.presencas.filter(x => x.presente).length : 0} / ${total} (${freq})<br><br>
 
-        <button class="presente" onclick="marcarPresenca('${p.id}', true)">✔ Hoje</button>
-        <button class="falta" onclick="marcarPresenca('${p.id}', false)">❌ Hoje</button><br><br>
+        <button class="presente" onclick="marcarPresenca('${p.id}', true)">✔ Presente</button>
+        <button class="falta" onclick="marcarPresenca('${p.id}', false)">❌ Falta</button><br><br>
 
         <div class="historico">
           <strong>Histórico:</strong><br>
@@ -169,13 +167,18 @@ function render() {
 }
 
 function marcarPresenca(id, valor) {
-  let hoje = dataHoje();
+  let dataEscolhida = document.getElementById("dataReuniao").value;
+
+  if (!dataEscolhida) {
+    alert("Escolha a data da reunião!");
+    return;
+  }
 
   db.ref("embaixadores/" + id + "/presencas").once("value", snap => {
     let lista = snap.val() || [];
 
     lista.push({
-      data: hoje,
+      data: dataEscolhida,
       presente: valor
     });
 
