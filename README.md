@@ -74,7 +74,7 @@ button {
 
 <div class="header">
   <img src="logo.png">
-  <h1>Embaixadores do Rei</h1>
+  <h1>Embaixada Eraldo Gomes</h1>
 </div>
 
 <form id="form">
