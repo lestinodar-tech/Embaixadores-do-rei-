@@ -80,7 +80,7 @@ button {
 <form id="form">
   <input type="text" id="nome" placeholder="Nome" required>
   <input type="date" id="nascimento" required>
-  <input type="text" id="tarefa" placeholder="Manual e Tarefa">
+  <input type="text" id="tarefa" placeholder="Tarefa / Etapa">
   <input type="text" id="telefone" placeholder="Telefone">
   <button class="salvar" type="submit">Salvar</button>
 </form>
@@ -118,6 +118,29 @@ db.ref("embaixadores").on("value", snapshot => {
   render();
 });
 
+// 🇧🇷 Formatar data
+function formatarData(data) {
+  if (!data) return "";
+  let partes = data.split("-");
+  return partes[2] + "/" + partes[1] + "/" + partes[0];
+}
+
+// 🎂 Calcular idade
+function calcularIdade(data) {
+  let hoje = new Date();
+  let nascimento = new Date(data);
+
+  let idade = hoje.getFullYear() - nascimento.getFullYear();
+  let m = hoje.getMonth() - nascimento.getMonth();
+
+  if (m < 0 || (m === 0 && hoje.getDate() < nascimento.getDate())) {
+    idade--;
+  }
+
+  return idade;
+}
+
+// 📊 Frequência
 function calcularFrequencia(pessoa) {
   if (!pessoa.presencas) return "0%";
 
@@ -129,27 +152,31 @@ function calcularFrequencia(pessoa) {
   return Math.round((presencas / total) * 100) + "%";
 }
 
+// 🧠 Render
 function render() {
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
 
-  dados.sort((a, b) => a.nome.localeCompare(b.nome));
+  // 🔄 ordenar do mais novo → mais velho
+  dados.sort((a, b) => new Date(b.nascimento) - new Date(a.nascimento));
 
   dados.forEach(p => {
     let total = p.presencas ? p.presencas.length : 0;
     let freq = calcularFrequencia(p);
+    let idade = calcularIdade(p.nascimento);
 
     let historico = "";
     if (p.presencas) {
       p.presencas.forEach(h => {
-        historico += `${h.data} - ${h.presente ? "✔" : "❌"}<br>`;
+        historico += `${formatarData(h.data)} - ${h.presente ? "✔" : "❌"}<br>`;
       });
     }
 
     lista.innerHTML += `
       <div class="card">
         <strong>${p.nome}</strong><br>
-        📅 ${p.nascimento}<br>
+        🎂 ${idade} anos<br>
+        📅 ${formatarData(p.nascimento)}<br>
         📌 Tarefa: ${p.tarefa}<br>
         📞 ${p.telefone}<br><br>
 
@@ -203,7 +230,7 @@ function editar(id) {
   editandoId = id;
 }
 
-// 💾 Salvar (corrigido)
+// 💾 Salvar
 document.getElementById("form").addEventListener("submit", function(e) {
   e.preventDefault();
 
