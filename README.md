@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Embaixada Eraldo Gomes</title>
+<title>Embaixadores do Rei</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
@@ -95,7 +95,7 @@ button {
 
 <div class="header">
   <img src="logo.png">
-  <h1>Embaixadores do Rei</h1>
+  <h1>Embaixada Eraldo Gomes</h1>
 </div>
 
 <form id="form">
